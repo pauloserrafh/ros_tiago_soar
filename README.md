@@ -19,3 +19,38 @@ roslaunch tiago_gazebo tiago_gazebo.launch public_sim:=true robot:=steel
 ```
 
 More information on the [ROS and TIAGo wiki|http://wiki.ros.org/Robots/TIAGo/Tutorials/Installation].
+
+
+Install Soar 9.6.0
+
+```
+sudo apt-get install build-essential swig openjdk-7-jdk python-all-dev
+wget http://soar.eecs.umich.edu/downloads/SoarSuite/SoarSuite_9.6.0-source.zip
+```
+
+Extract SoarSuite_9.6.0-source.zip, go to folder and type:
+```
+python scons/scons.py all
+```
+
+To get the PATH_TO_SOAR go to the folder extract and type in terminal: pwd
+After that put the PATH_TO_SOAR in the export, and copy each line and put in ~/.bashrc
+
+```
+export LD_LIBRARY_PATH=PATH_TO_SOAR/out:$LD_LIBRARY_PATH
+export CPATH=$HOME/SoarSuite/out/include:$CPATH
+export SOAR_HOME=$HOME/SoarSuite/out
+```
+
+After that type in terminal:
+
+```
+source ~/.bashrc
+```
+
+If you have any doubt or error to install Soar 9.6.0, to to this link:
+
+[Soar 9.6.0 Building on Linux|https://soar.eecs.umich.edu/articles/articles/building-soar/81-building-on-linux]
+
+ps: Before run, you need to change Soar path in main.py
+
