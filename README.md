@@ -4,7 +4,7 @@ Project aims to use the Soar cognitive architecture to control the TIAGo robot u
 Gazebo is used for simulations.
 
 This code runs on ubuntu 14 because of limitations of ROS/Gazebo/TIAGo. Image to be provided.
-ROS Indigo (Gazebo 7 is installed when following the steps on the wiki)
+ROS Indigo (Gazebo 2.2.3 is installed when following the steps on the wiki)
 Python 2.7.6
 Soar 9.6.0
 
