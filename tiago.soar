@@ -1,0 +1,18 @@
+# Look for the hello world WME on the input-link
+# If it is there, propose the wave operator
+sp {propose*wave
+    (state <s> ^io.input-link.helloworld)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name wave)
+}
+
+# Apply the wave operator by creating an empty 
+# identifier on the output link. This is essentially
+# a command with no parameters.
+sp {apply*wave
+    (state <s> ^operator.name wave 
+               ^io.output-link <ol>)
+-->
+    (<ol> ^wave <wave>)
+}
