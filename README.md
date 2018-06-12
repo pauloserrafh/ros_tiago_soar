@@ -12,16 +12,21 @@ The utils folder has the basic code used for interations between python, ROS and
 python_ros_gazebo.py --> Integration between python, ros and gazebo.
 python_soar.py --> Integration between pyton and Soar.
 
+## Running
 Before running any command that depends on Gazebo, it's necessary to start the environment (in a new terminal) as stated on section [Testing the simulation installation|http://wiki.ros.org/Robots/TIAGo/Tutorials/Installation/TiagoSimulation]
 ```
 source /home/user/tiago_public_ws/devel/setup.bash
 roslaunch tiago_gazebo tiago_gazebo.launch public_sim:=true robot:=steel
 ```
-
+If everything is working, you should see "All is well! Everyone is happy! You can start planning now!" and the Gazebo opens and the simulation example should run.
 More information on the [ROS and TIAGo wiki|http://wiki.ros.org/Robots/TIAGo/Tutorials/Installation].
 
+After having the environment running, open a new terminal window and go to the folder where you cloned this repo and run:
+```
+python main.py
+```
 
-Install Soar 9.6.0
+## Install Soar 9.6.0
 
 ```
 sudo apt-get install build-essential swig openjdk-7-jdk python-all-dev
@@ -54,3 +59,8 @@ If you have any doubt or error to install Soar 9.6.0, to to this link:
 
 ps: Before run, you need to change Soar path in main.py
 
+
+## Issues
+- Sometimes (usually in the first time it's executed), Gazebo does not open properly and the terminal shows some errors like:
+"Error [Node.cc:90] No namespace found"
+Close the running terminal and re-run Gazebo
