@@ -29,6 +29,8 @@ sys.path.append(PATH_TO_SOAR)
 import Python_sml_ClientInterface as sml
 
 SOAR_GP_PATH = "./tiago.soar"
+object_found = False
+search_done = False
 
 def wait_for_valid_time(timeout):
 	"""Wait for a valid time (non-zero), this is important
@@ -65,7 +67,6 @@ class SOARInterface:
 
 	def sendOK(self):
 		return "succeeded"
-
 
 def define_prohibitions(): #TODISCOVER WTF IS THIS
 	pass
@@ -140,12 +141,47 @@ class Tiago:
 		else:
 			rospy.logwarn("Action failed with state: " + str(get_status_string(state)))
 
+def object_to_find_file():
+	f = open('search.txt', 'r')
+	to_find = f.readline()
+	f.close()
+	return to_find
+
+def object_position_file():
+	f = open('found.txt', 'r')
+	to_find = f.readline()
+	f.close()
+	return to_find
+
+def run_command(command_name):
+	if command_name  == 'helloworld':
+		robot = Tiago()
+		robot.act(action = "wave")
+		robot.reset()
+		return (False, False, '')
+	elif command_name  == 'searchball':
+		robot = Tiago()
+		robot.act(action = "wave")
+		robot.reset()
+		return (False, False, object_position_file())
+	elif command_name  == 'found':
+		robot = Tiago()
+		robot.act(action = "wave")
+		robot.reset()
+		return (True, True, '')
+	elif command_name  == 'notfound':
+		robot = Tiago()
+		robot.act(action = "wave")
+		robot.reset()
+		return (False, True, '')
+
 
 
 if __name__ == '__main__':
 	soar_interface = SOARInterface()
-	
-	# print "******************************\n******************************\nNew goal\n******************************\n******************************\n"
+	to_find = object_to_find_file() # The object to be found
+
+	print "******************************\n******************************\nNew goal\n******************************\n******************************\n"
 	kernel = create_kernel()
 	agent = create_agent(kernel, "agent")
 	agent_load_productions(agent,SOAR_GP_PATH)
@@ -156,27 +192,42 @@ if __name__ == '__main__':
 	time.sleep(10)
 
 	pInputLink = agent.GetInputLink()
-	pID = agent.CreateIdWME(pInputLink, "helloworld")
+	# pID = agent.CreateIdWME(pInputLink, "helloworld")
+	pID = agent.CreateIdWME(pInputLink, to_find)
 
 
-	agent.Commit()
-	agent.RunSelfTilOutput()
-	agent.Commands()
-	numberCommands = agent.GetNumberCommands()
-	print "Number of commands received by the agent: %s" % (numberCommands)
-	if (numberCommands):
-		command = agent.GetCommand(0)
-		command_name = command.GetCommandName()
-		print("command: ")
-		print(command)
-		print("command_name: ")
-		print(command_name)
+	while not search_done:
+		i = 0
+		agent.Commit()
+		agent.RunSelfTilOutput()
+		agent.Commands()
+		numberCommands = agent.GetNumberCommands()
+		print "Number of commands received by the agent: %s" % (numberCommands)
+		if (numberCommands):
+			while (i<numberCommands):
+				command = agent.GetCommand(i)
+				command_name = command.GetCommandName()
+				print("command: ")
+				print(command)
+				print("command_name: ")
+				print(command_name)
+				object_found, search_done, object_position = run_command(command_name)
+				print "object_found, search_done, object_position"
+				print object_found, search_done, object_position, i
+				i+=1
 
-		robot = Tiago()
-		robot.act(action = "wave")
-		robot.reset()
+				agent.DestroyWME(pID)
+				pID = agent.CreateIdWME(pInputLink, object_position)
+				time.sleep(3)
+
+		else:
+			print("Error. No comamands received.")
+
+	if(object_found):
+		print "Object Found"
 	else:
-		print("Error. No comamands received.")
+		print "Not Found"
+
 
 	kernel.DestroyAgent(agent)
 	kernel.Shutdown()
