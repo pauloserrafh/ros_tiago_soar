@@ -7,12 +7,60 @@ sp {propose*wave
     (<o> ^name wave)
 }
 
-# Apply the wave operator by creating an empty 
+# Look for the object "searchball" WME on the input-link
+# If it is there, propose the searchball operator
+sp {propose*searchball
+    (state <s> ^io.input-link.ball)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name searchball)
+}
+
+sp {propose*notfound
+    (state <s> ^io.input-link.notfound)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name notfound)
+}
+
+sp {propose*found
+    (state <s> ^io.input-link.found)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name found)
+}
+
+# Apply the wave operator by creating an empty
 # identifier on the output link. This is essentially
 # a command with no parameters.
 sp {apply*wave
-    (state <s> ^operator.name wave 
+    (state <s> ^operator.name wave
                ^io.output-link <ol>)
 -->
     (<ol> ^wave <wave>)
+}
+
+# Apply the searchball operator by creating an empty
+# identifier on the output link. This is essentially
+# a command with no parameters.
+sp {apply*searchball
+    (state <s> ^operator.name searchball
+               ^io.output-link <ol>)
+-->
+    (<ol> ^searchball <searchball>)
+}
+
+
+sp {apply*notfound
+    (state <s> ^operator.name notfound
+               ^io.output-link <ol>)
+-->
+    (<ol> ^notfound <notfound>)
+}
+
+sp {apply*found
+    (state <s> ^operator.name found
+               ^io.output-link <ol>)
+-->
+    (<ol> ^found <found>)
 }
