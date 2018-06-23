@@ -1,0 +1,52 @@
+sp {groceries*propose*init
+    (state <s> ^type state
+                ^-upload_done)
+-->
+    (<s> ^operator <o> +)
+    (<o> ^name upload)
+}
+
+sp {groceries*propose*idle
+    (state <s> ^upload_done
+                -^cmd_name)
+-->
+    (<s> ^operator <o>)
+    (<o> ^name check_cmd)
+}
+
+sp {groceries*propose*search
+    (state <s> ^cmd_name <c>
+                ^obj <obj>)
+    (<c> ^name search
+        ^obj_name <oname>)
+    (<obj> ^name {<name> = <oname>})
+-->
+    (<s> ^operator <o>)
+    (<o> ^name search
+            ^obj <obj>)
+}
+
+sp {groceries*apply*init
+    (state <s> ^operator.name upload 
+-->
+    (<s> ^upload_done
+        ^obj <obj>)
+    (<obj> ^name ball)
+}
+
+sp {groceries*apply*idle
+    (state <s> ^operator.name check_cmd)
+-->
+    (<s> ^cmd_name <cmd>)
+    (<cmd> ^name search
+            ^obj_name ball)
+}
+
+sp {groceries*apply*search
+    (state <s> ^operator <o>)
+    (<o> ^name search
+        ^obj <obj>)
+-->
+    (write |Search|)
+    (halt)
+}
