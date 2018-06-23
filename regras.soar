@@ -1,6 +1,6 @@
 sp {groceries*propose*init
     (state <s> ^type state
-                ^-upload_done)
+                -^upload_done)
 -->
     (<s> ^operator <o> +)
     (<o> ^name upload)
@@ -19,7 +19,7 @@ sp {groceries*propose*search
                 ^obj <obj>)
     (<c> ^name search
         ^obj_name <oname>)
-    (<obj> ^name {<name> = <oname>})
+    (<obj> ^name <oname>)
 -->
     (<s> ^operator <o>)
     (<o> ^name search
@@ -27,9 +27,9 @@ sp {groceries*propose*search
 }
 
 sp {groceries*apply*init
-    (state <s> ^operator.name upload 
+    (state <s> ^operator.name upload) 
 -->
-    (<s> ^upload_done
+    (<s> ^upload_done 1
         ^obj <obj>)
     (<obj> ^name ball)
 }
