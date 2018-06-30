@@ -2,8 +2,9 @@ sp {groceries*propose*init
     (state <s> ^type state
                 -^upload_done)
 -->
-    (<s> ^operator <o> +)
+    (<s> ^operator <o>)
     (<o> ^name upload)
+    (write |PInit|)
 }
 
 sp {groceries*propose*idle
@@ -12,6 +13,7 @@ sp {groceries*propose*idle
 -->
     (<s> ^operator <o>)
     (<o> ^name check_cmd)
+    (write |PIdle|)
 }
 
 sp {groceries*propose*search
@@ -24,6 +26,7 @@ sp {groceries*propose*search
     (<s> ^operator <o>)
     (<o> ^name search
             ^obj <obj>)
+    (write |PSearch|)
 }
 
 sp {groceries*propose*presearch
@@ -32,50 +35,109 @@ sp {groceries*propose*presearch
 -->
     (<s> ^operator <o>)
     (<o> ^name presearch)
+    (write |PPre|)
+}
+sp {groceries*propose*searchresult
+    (state <s> ^cmd_name <c>
+                ^searchstatus)
+    (<c> ^name search)
+-->
+    (<s> ^operator <o>)
+    (<o> ^name searchresult)
+    (write |PSResult|)
+}
+
+sp {groceries*propose*presearchresult
+    (state <s> ^cmd_name <c>
+                ^newobj)
+    (<c> ^name search)
+-->
+    (<s> ^operator <o>)
+    (<o> ^name presearchresult)
+    (write |PPreResult|)
 }
 
 sp {groceries*apply*init
-    (state <s> ^operator.name upload) 
+    (state <s> ^operator.name upload)
 -->
     (<s> ^upload_done 1
         ^obj <obj>)
     (<obj> ^name ball)
+    (write |Init|)
 }
 
 sp {groceries*apply*idle
     (state <s> ^operator.name check_cmd)
 -->
-    (<s> ^cmd_name <cmd>)
-    (<cmd> ^name search
-            ^obj_name bottle)
+    (<s> ^cmd_name <c>)
+    (<c> ^name search
+            ^obj_name ball)
     (write |Idle|)
 }
 
 sp {groceries*apply*search
-    (state <s> ^operator <o>
-               ^cmd_name <c>)
+    (state <s> ^operator <o>)
     (<o> ^name search
         ^obj <obj>)
 -->
     (write |Search|)
-    (<s> ^known 1 -)
-    (<s> ^cmd_name <c> -)
-    (halt)
+    (<s> ^searchstatus 1)
 }
 
 sp {groceries*apply*presearch
     (state <s> ^operator.name presearch)
 -->
-   (<s> ^newobj 1
-        ^obj <obj>)
+   (<s> ^newobj 1)
+   (write |PreSearch|)
+}
+
+sp {groceries*apply*searchresult*found
+    (state <s> ^operator.name searchresult
+                ^searchstatus 1)
+-->
+    (write |Found|)
+    (<s> ^known 1 -)
+    (<s> ^cmd_name <c> -)
+    (<s> ^searchstatus 1 -)
+    (halt)
+}
+
+sp {groceries*apply*searchresult*notfound
+    (state <s> ^operator.name searchresult
+                ^searchstatus 0)
+-->
+    (write |Not Found|)
+    (<s> ^known 1 -)
+    (<s> ^cmd_name <c> -)
+    (<s> ^searchstatus 0 -)
+    (halt)
+}
+
+sp {groceries*apply*presearchresult*found
+    (state <s> ^operator.name presearchresult
+                ^newobj 1)
+-->
+    (write |NewObj|)
+    (<s> ^newobj 1 -)
+    (<s> ^obj <obj>)
     (<obj> ^name bottle)
+}
+
+sp {groceries*apply*presearchresult*notfound
+    (state <s> ^operator.name presearchresult
+                ^newobj 0
+                ^cmd_name <c>)
+-->
+    (write |NoNewObj|)
+    (<s> ^cmd_name <c> -)
+    (<s> ^newobj 0 -)
+    (halt)
 }
 
 sp {groceries*elaborate*isknown
     (state <s> ^cmd_name <c>
                 ^obj <obj>)
-    (<c> ^name search
-         ^obj_name <oname>)
+    (<c> ^obj_name <oname>)
     (<obj> ^name <oname>)
 -->
     (<s> ^known 1)
