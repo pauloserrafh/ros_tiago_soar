@@ -18,7 +18,8 @@ sp {groceries*propose*idle
 
 sp {groceries*propose*search
     (state <s> ^cmd_name <c>
-                ^obj <obj>)
+                ^obj <obj>
+                -^searchstatus)
     (<c> ^name search
         ^obj_name <oname>)
     (<obj> ^name <oname>)
@@ -31,7 +32,8 @@ sp {groceries*propose*search
 
 sp {groceries*propose*presearch
     (state <s> ^cmd_name <c>
-                -^known)
+                -^known
+                -^newobj)
 -->
     (<s> ^operator <o>)
     (<o> ^name presearch)
