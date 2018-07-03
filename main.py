@@ -28,7 +28,7 @@ PATH_TO_SOAR = "/home/user/SOAR/Soar/out"
 sys.path.append(PATH_TO_SOAR)
 import Python_sml_ClientInterface as sml
 
-SOAR_GP_PATH = "./tiago.soar"
+SOAR_GP_PATH = "./regras.soar"
 object_found = False
 search_done = False
 
@@ -175,8 +175,6 @@ def run_command(command_name):
 		robot.reset()
 		return (False, True, '')
 
-
-
 if __name__ == '__main__':
 	soar_interface = SOARInterface()
 	to_find = object_to_find_file() # The object to be found
@@ -193,7 +191,7 @@ if __name__ == '__main__':
 
 	pInputLink = agent.GetInputLink()
 	# pID = agent.CreateIdWME(pInputLink, "helloworld")
-	pID = agent.CreateIdWME(pInputLink, to_find)
+	pID = agent.CreateIdWME(pInputLink, "tiago")
 
 
 	while not search_done:
@@ -207,22 +205,33 @@ if __name__ == '__main__':
 			while (i<numberCommands):
 				command = agent.GetCommand(i)
 				command_name = command.GetCommandName()
+				command_attr = command.FindByAttribute('name',0)
+
 				print("command: ")
 				print(command)
 				print("command_name: ")
 				print(command_name)
-				object_found, search_done, object_position = run_command(command_name)
-				print "object_found, search_done, object_position"
-				print object_found, search_done, object_position, i
-				i+=1
 
-				agent.DestroyWME(pID)
-				pID = agent.CreateIdWME(pInputLink, object_position)
-				time.sleep(3)
+				print("command_attr: ")
+				print(command_attr.GetAttribute())
+				print("command_attr_str: ")
+				print(command_attr.GetValueAsString())
+
+				wme1 = agent.CreateIntWME(pID, "cmd_name", search)
+
+				# object_found, search_done, object_position = run_command(command_name)
+				# print "object_found, search_done, object_position"
+				# print object_found, search_done, object_position, i
+				# i+=1
+
+				# agent.DestroyWME(pID)
+				# pID = agent.CreateIdWME(pInputLink, object_position)
+				# time.sleep(3)
+				c = raw_input('continue: ')
 
 		else:
 			print("Error. No comamands received.")
-
+		c = raw_input('continue: ')
 	if(object_found):
 		print "Object Found"
 	else:
