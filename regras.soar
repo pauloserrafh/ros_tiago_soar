@@ -1,11 +1,12 @@
 sp {groceries*propose*init
     (state <s> ^type state
-                -^upload_done)
+                -^upload_done
+                ^io.input-link)
 -->
     (<s> ^operator <o>)
     (<o> ^name upload)
-    (write |PInit|)
 }
+
 
 sp {groceries*propose*idle
     (state <s> ^upload_done
@@ -62,7 +63,8 @@ sp {groceries*propose*presearchresult
 #########################################   APPLY   ############################
 
 sp {groceries*apply*init
-    (state <s> ^operator.name upload)
+    (state <s> ^operator.name upload
+                ^io.output-link <out>)
 -->
     (<s> ^upload_done 1
         ^obj <obj>)
@@ -70,7 +72,9 @@ sp {groceries*apply*init
            ^left Null
            ^right Null
            ^pos Null)
-   (write |Init|)
+    (write |Init|)
+    (<out> ^action <a>)
+    (<a> ^name upload)
 }
 
 sp {groceries*apply*idle
