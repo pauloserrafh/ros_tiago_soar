@@ -72,16 +72,31 @@ class TiagoObjectDetection:
 
 		if (action == 'detectObject'):
 
-			cli_args = ['/opt/ros/indigo/share/find_object_2d/launch/teste.launch' , 'gui:=true']
-			roslaunch_args = cli_args[1:] 
-			roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(cli_args)[0], roslaunch_args)]
+			#cli_args = ['/opt/ros/indigo/share/find_object_2d/launch/teste.launch' , 'gui:=true']
+			#roslaunch_args = cli_args[1:] 
+			#roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(cli_args)[0], roslaunch_args)]
 			                
 			
-			uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+			#uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+			#roslaunch.configure_logging(uuid)
+			#launch = roslaunch.parent.ROSLaunchParent(uuid, roslaunch_file)#
+
+			#launch.start()
+
+
+			import roslaunch
+
+			cli_args = ['/opt/ros/indigo/share/find_object_2d/launch/teste.launch']
+			#roslaunch_args = cli_args[0:] 
+			#print(roslaunch_args)
+			roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(cli_args)[0])]
+			print(roslaunch_file)
+			uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)    
 			roslaunch.configure_logging(uuid)
-			launch = roslaunch.parent.ROSLaunchParent(uuid, roslaunch_file)#
+			launch = roslaunch.parent.ROSLaunchParent(uuid,  roslaunch_file)#'/opt/ros/indigo/share/find_object_2d/launch/teste.launch')
 
 			launch.start()
+
 
 
 
@@ -135,33 +150,33 @@ class TiagoObjectDetection:
 		msg = object_detect.objects.data
 		if(len(msg)):
 			print("Len: {}".format(len(msg)))
-			j=0
-		while j < len(msg):
-			idx = msg[j]
-			objectWidth = msg[j+1]
-			objectHeight = msg[j+2]
-
-			# Find corners Qt
-			qtHomography = QTransform(msg[j+3], msg[j+4], msg[j+5],
-			msg[j+6], msg[j+7], msg[j+8],
-			msg[j+9], msg[j+10], msg[j+11])
-
-			qtTopLeft = qtHomography.map(QPointF(0,0));
-			qtTopRight = qtHomography.map(QPointF(objectWidth,0));
-			qtBottomLeft = qtHomography.map(QPointF(0,objectHeight));
-			qtBottomRight = qtHomography.map(QPointF(objectWidth,objectHeight));
-
-			print("Object {} detected, Qt corners at ({},{}) ({},{}) ({},{}) ({},{})\n".format(idx,
-			qtTopLeft.x(), qtTopLeft.y(),
-			qtTopRight.x(), qtTopRight.y(),
-			qtBottomLeft.x(), qtBottomLeft.y(),
-			qtBottomRight.x(), qtBottomRight.y()))
-			topleft = (int(qtTopLeft.x()), int(qtTopLeft.y()))
-			bottomright = (int(qtBottomRight.x()), int(qtBottomRight.y()))
-			cv2.rectangle(cv2_img, topleft, bottomright,(255,255,255),3)
-			#cv2.imshow("Teste", cv2_img)
-			#cv2.waitKey(30)
-			j+=12
+			j = 0
+			while j < len(msg):
+				idx = msg[j]
+				objectWidth = msg[j+1]
+				objectHeight = msg[j+2]
+				
+				# Find corners Qt
+				qtHomography = QTransform(msg[j+3], msg[j+4], msg[j+5],
+				msg[j+6], msg[j+7], msg[j+8],
+				msg[j+9], msg[j+10], msg[j+11])
+				
+				qtTopLeft = qtHomography.map(QPointF(0,0));
+				qtTopRight = qtHomography.map(QPointF(objectWidth,0));
+				qtBottomLeft = qtHomography.map(QPointF(0,objectHeight));
+				qtBottomRight = qtHomography.map(QPointF(objectWidth,objectHeight));
+				
+				print("Object {} detected, Qt corners at ({},{}) ({},{}) ({},{}) ({},{})\n".format(idx,
+				qtTopLeft.x(), qtTopLeft.y(),
+				qtTopRight.x(), qtTopRight.y(),
+				qtBottomLeft.x(), qtBottomLeft.y(),
+				qtBottomRight.x(), qtBottomRight.y()))
+				topleft = (int(qtTopLeft.x()), int(qtTopLeft.y()))
+				bottomright = (int(qtBottomRight.x()), int(qtBottomRight.y()))
+				cv2.rectangle(cv2_img, topleft, bottomright,(255,255,255),3)
+				#cv2.imshow("Teste", cv2_img)
+				#cv2.waitKey(30)
+				j+=12
 		else:
 			print("No objects detected.\n")
 		self.image = cv2_img
