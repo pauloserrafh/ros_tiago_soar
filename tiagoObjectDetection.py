@@ -5,12 +5,9 @@ import time
 import rospy
 from actionlib import SimpleActionClient, GoalStatus
 from play_motion_msgs.msg import PlayMotionAction, PlayMotionGoal
-# Soar imports
-PATH_TO_SOAR = "/home/user/SOAR/Soar/out"
-sys.path.append(PATH_TO_SOAR)
-import Python_sml_ClientInterface as sml
 
 import rospy
+import roslaunch
 import sys
 import cv2
 from message_filters import TimeSynchronizer, Subscriber
@@ -24,9 +21,6 @@ from find_object_2d.msg import ObjectsStamped
 # Instantiate CvBridge
 bridge = CvBridge()
 
-
-
-SOAR_GP_PATH = "./tiago.soar"
 
 def wait_for_valid_time(timeout):
 	"""Wait for a valid time (non-zero), this is important
@@ -54,16 +48,14 @@ def get_status_string(status_code):
 class TiagoObjectDetection:
 	def __init__(self):
 		rospy.init_node('run_motion_python')
-
 		rospy.loginfo("Starting run_motion_python application...")
 		wait_for_valid_time(10.0)
-
 		self.client = SimpleActionClient('/play_motion', PlayMotionAction)
 
 		rospy.loginfo("Waiting for Action Server...")
 		self.client.wait_for_server()
-
-		rospy.init_node('listener', anonymous=True)
+		self.image = None
+		#rospy.init_node('listener', anonymous=True)
 
 		# images = message_filters.Subscriber('/xtion/rgb/image_raw', Image)
 		# object_detect = message_filters.Subscriber('/objectsStamped', ObjectsStamped)
@@ -78,50 +70,57 @@ class TiagoObjectDetection:
 		goal.skip_planning = False
 		goal.priority = 0  # Optional
 
-		rospy.loginfo("Sending goal with motion: " + goal.motion_name)
-		self.client.send_goal(goal)
-
-		rospy.loginfo("Waiting for result...")
-		action_ok = self.client.wait_for_result(rospy.Duration(30.0))
-
-		state = self.client.get_state()
-
 		if (action == 'detectObject'):
+
+			cli_args = ['/opt/ros/indigo/share/find_object_2d/launch/teste.launch' , 'gui:=true']
+			roslaunch_args = cli_args[1:] 
+			roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(cli_args)[0], roslaunch_args)]
+			                
+			
+			uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
+			roslaunch.configure_logging(uuid)
+			launch = roslaunch.parent.ROSLaunchParent(uuid, roslaunch_file)#
+
+			launch.start()
+
+
+
+			#roslaunch_file1 = roslaunch.rlutil.resolve_launch_arguments(cli_args1)
+			#roslaunch_args1 = cli_args1[2:]
+			#
+			#launch_files = [(roslaunch_file1, roslaunch_args1), (roslaunch_file2, roslaunch_args2), roslaunch_file3]
+
+
 			image = rospy.wait_for_message("/xtion/rgb/image_raw", Image, 30.0)
 			object_detect = rospy.wait_for_message('/objectsStamped', ObjectsStamped, 30.0)
-			doObjectDetect(image,object_detect)
-		
+			self.doObjectDetect(image,object_detect)		
+
+			#self.exitRoslaunch()
 
 		elif (action == 'preSearchObject'):
 			print("preSearchObject")
-				
+		elif (action == 'wave'):
 
-		if action_ok:
-			rospy.loginfo("Action finished succesfully with state: " + str(get_status_string(state)))
-		else:
-			rospy.logwarn("Action failed with state: " + str(get_status_string(state)))
+			rospy.loginfo("Sending goal with motion: " + goal.motion_name)
+			self.client.send_goal(goal)
+
+			rospy.loginfo("Waiting for result...")
+			action_ok = self.client.wait_for_result(rospy.Duration(30.0))
+
+			state = self.client.get_state()
+
+		#if action_ok:
+		#	rospy.loginfo("Action finished succesfully with state: " + str(get_status_string(state)))
+		#else:
+		#	rospy.logwarn("Action failed with state: " + str(get_status_string(state)))
 
 	def reset(self):
-		goal = PlayMotionGoal()
-		goal.motion_name = 'home'
-		goal.skip_planning = False
-		goal.priority = 0  # Optional
+		pass
 
-		rospy.loginfo("Sending goal with motion: " + goal.motion_name)
-		self.client.send_goal(goal)
+	def exitRoslaunch(self):
+		print("Good bye")
 
-		rospy.loginfo("Waiting for result...")
-		action_ok = self.client.wait_for_result(rospy.Duration(30.0))
-
-		state = self.client.get_state()
-
-		if action_ok:
-			rospy.loginfo("Action finished succesfully with state: " + str(get_status_string(state)))
-		else:
-			rospy.logwarn("Action failed with state: " + str(get_status_string(state)))
-
-
-	def doObjectDetect(image,object_detect):
+	def doObjectDetect(self,image,object_detect):
 		print(image.header.stamp)
 		print(object_detect.header.stamp)
 		#assert image.header.stamp == data.header.stamp
@@ -160,50 +159,21 @@ class TiagoObjectDetection:
 			topleft = (int(qtTopLeft.x()), int(qtTopLeft.y()))
 			bottomright = (int(qtBottomRight.x()), int(qtBottomRight.y()))
 			cv2.rectangle(cv2_img, topleft, bottomright,(255,255,255),3)
-			cv2.imshow("Teste", cv2_img)
-			cv2.waitKey(30)
+			#cv2.imshow("Teste", cv2_img)
+			#cv2.waitKey(30)
 			j+=12
 		else:
 			print("No objects detected.\n")
+		self.image = cv2_img
 
+
+	def getImage(self):
+		return self.image
 
 if __name__ == '__main__':
-	soar_interface = SOARInterface()
-	
-	# print "******************************\n******************************\nNew goal\n******************************\n******************************\n"
-	kernel = create_kernel()
-	agent = create_agent(kernel, "agent")
-	agent_load_productions(agent,SOAR_GP_PATH)
-	agent.SpawnDebugger()
 
-	kernel.CheckForIncomingCommands()
-
-	time.sleep(10)
-
-	pInputLink = agent.GetInputLink()
-	pID = agent.CreateIdWME(pInputLink, "helloworld")
-
-
-	agent.Commit()
-	agent.RunSelfTilOutput()
-	agent.Commands()
-	numberCommands = agent.GetNumberCommands()
-	print "Number of commands received by the agent: %s" % (numberCommands)
-	if (numberCommands):
-		command = agent.GetCommand(0)
-		command_name = command.GetCommandName()
-		print("command: ")
-		print(command)
-		print("command_name: ")
-		print(command_name)
-
-		robot = TiagoObjectDetection()
-		robot.act(action = "detectObject")
-		robot.reset()
-	else:
-		print("Error. No comamands received.")
-
-	kernel.DestroyAgent(agent)
-	kernel.Shutdown()
-	#del kernelCommit
-
+	robot = TiagoObjectDetection()
+	robot.act(action = "detectObject")
+	robot.reset()
+	cv2.imshow("Teste", robot.getImage())
+	cv2.waitKey(0)
