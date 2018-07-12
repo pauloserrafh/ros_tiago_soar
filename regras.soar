@@ -59,13 +59,18 @@ sp {groceries*propose*presearchresult
     (write |PPreResult|)
 }
 
+#########################################   APPLY   ############################
+
 sp {groceries*apply*init
     (state <s> ^operator.name upload)
 -->
     (<s> ^upload_done 1
         ^obj <obj>)
-    (<obj> ^name ball)
-    (write |Init|)
+    (<obj> ^name ball
+           ^left Null
+           ^right Null
+           ^pos Null)
+   (write |Init|)
 }
 
 sp {groceries*apply*idle
@@ -136,6 +141,7 @@ sp {groceries*apply*presearchresult*notfound
     (halt)
 }
 
+############################   ELABORATES #########################
 sp {groceries*elaborate*isknown
     (state <s> ^cmd_name <c>
                 ^obj <obj>)
@@ -144,4 +150,48 @@ sp {groceries*elaborate*isknown
 -->
     (<s> ^known 1)
     (write |Elaborate|)
+}
+
+sp {groceries*elaborate*isLeft*name
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^name <o1name>
+            ^left <o1left>)
+    (<obj2> ^name <o1left>)
+-->
+    (<obj2> ^right <o1name>)
+    (write |Name from left|)
+}
+
+sp {groceries*elaborate*isRight*name
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^name <o1name>
+            ^right <o1right>)
+    (<obj2> ^name <o1right>)
+-->
+    (<obj2> ^left <o1name>)
+    (write |Name from right|)
+}
+
+sp {groceries*elaborate*isLeft*pos
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^left <o1left>
+            ^pos {<> Null <pos1>})
+    (<obj2> ^name <o1left>)
+-->
+    (<obj2> ^pos (- <pos1> 1))
+    (write |Pos from left|)
+}
+
+sp {groceries*elaborate*isRight*pos
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^right <o1right>
+            ^pos {<> Null <pos1>})
+    (<obj2> ^name <o1right>)
+-->
+    (<obj2> ^pos (+ <pos1> 1))
+    (write |Pos from right|)
 }
