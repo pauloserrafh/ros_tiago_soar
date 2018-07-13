@@ -187,17 +187,18 @@ if __name__ == '__main__':
 
 	kernel.CheckForIncomingCommands()
 
-	time.sleep(10)
+	time.sleep(5)
 
 	pInputLink = agent.GetInputLink()
 	# pID = agent.CreateIdWME(pInputLink, "helloworld")
-	pID = agent.CreateIdWME(pInputLink, "tiago")
+	# pID = agent.CreateIdWME(pInputLink, "tiago")
+	# agent.Commit()
 
 
 	while not search_done:
 		i = 0
-		agent.Commit()
-		agent.RunSelfTilOutput()
+		# agent.RunSelfTilOutput()
+		agent.RunSelf(1)
 		agent.Commands()
 		numberCommands = agent.GetNumberCommands()
 		print "Number of commands received by the agent: %s" % (numberCommands)
@@ -217,7 +218,14 @@ if __name__ == '__main__':
 				print("command_attr_str: ")
 				print(command_attr.GetValueAsString())
 
-				wme1 = agent.CreateIntWME(pID, "cmd_name", search)
+				if command_attr.GetValueAsString()  == 'search':
+					print("Entrou search")
+					wme1 = agent.CreateIntWME(pInputLink, "status", 0)
+					agent.Commit()
+					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
+					# agent.RunSelf(1)
+
+				# wme1 = agent.CreateIntWME(pID, "cmd_name", search)
 
 				# object_found, search_done, object_position = run_command(command_name)
 				# print "object_found, search_done, object_position"
@@ -228,10 +236,10 @@ if __name__ == '__main__':
 				# pID = agent.CreateIdWME(pInputLink, object_position)
 				# time.sleep(3)
 				c = raw_input('continue: ')
-
+				i += 1
 		else:
 			print("Error. No comamands received.")
-		c = raw_input('continue: ')
+			c = raw_input('continue: ')
 	if(object_found):
 		print "Object Found"
 	else:
