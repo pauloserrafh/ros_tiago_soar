@@ -31,6 +31,7 @@ import Python_sml_ClientInterface as sml
 SOAR_GP_PATH = "./regras.soar"
 object_found = False
 search_done = False
+object_exists = True
 
 def wait_for_valid_time(timeout):
 	"""Wait for a valid time (non-zero), this is important
@@ -187,60 +188,86 @@ if __name__ == '__main__':
 
 	kernel.CheckForIncomingCommands()
 
-	time.sleep(5)
+	# time.sleep(5)
 
 	pInputLink = agent.GetInputLink()
 	# pID = agent.CreateIdWME(pInputLink, "helloworld")
 	# pID = agent.CreateIdWME(pInputLink, "tiago")
 	# agent.Commit()
 
-
+	# Precisa fazer um run antes de iniciar.
+	agent.RunSelf(1)
+	agent.Commands()
 	while not search_done:
-		i = 0
 		# agent.RunSelfTilOutput()
 		agent.RunSelf(1)
 		agent.Commands()
 		numberCommands = agent.GetNumberCommands()
 		print "Number of commands received by the agent: %s" % (numberCommands)
 		if (numberCommands):
-			while (i<numberCommands):
-				command = agent.GetCommand(i)
-				command_name = command.GetCommandName()
-				command_attr = command.FindByAttribute('name',0)
+			command = agent.GetCommand(0)
+			command_name = command.GetCommandName()
+			command_attr = command.FindByAttribute('name',0)
 
-				print("command: ")
-				print(command)
-				print("command_name: ")
-				print(command_name)
+			print("command: ")
+			print(command)
+			print("command_name: ")
+			print(command_name)
 
-				print("command_attr: ")
-				print(command_attr.GetAttribute())
-				print("command_attr_str: ")
-				print(command_attr.GetValueAsString())
+			print("command_attr: ")
+			print(command_attr.GetAttribute())
+			print("command_attr_str: ")
+			print(command_attr.GetValueAsString())
 
-				if command_attr.GetValueAsString()  == 'search':
-					print("Entrou search")
-					wme1 = agent.CreateIntWME(pInputLink, "status", 0)
-					agent.Commit()
-					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
-					# agent.RunSelf(1)
+			command_name = command_attr.GetValueAsString()
 
-				# wme1 = agent.CreateIntWME(pID, "cmd_name", search)
+			if command_name  == 'init':
+				wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
+				wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
+				wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", "bottle")
+				agent.Commit()
+				# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
+				agent.RunSelf(1)
+			elif command_name  == 'search':
+				print("Buscando objeto")
+				wme_status = agent.CreateIntWME(pInputLink, "status", 1)
+				agent.Commit()
+				# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
+				agent.RunSelf(1)
+			elif command_name  == 'presearch':
+				print("Verificando...")
+				wme_new = agent.CreateIntWME(pInputLink, "new", 1)
+				wme_obj = agent.CreateIdWME(pInputLink, "obj")
+				wme_obj_name = agent.CreateStringWME(wme_obj, "name", "bottle")
+				agent.Commit()
+				# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
+				agent.RunSelf(1)
+			elif command_name  == 'searchresultfound':
+				search_done = True
+				object_found = True
+			elif command_name  == 'searchresultnotfound':
+				search_done = True
+				object_found = False
+			elif command_name  == 'presearchresultnotfound':
+				search_done = True
+				object_exists = False
+			# wme1 = agent.CreateIntWME(pID, "cmd_name", search)
 
-				# object_found, search_done, object_position = run_command(command_name)
-				# print "object_found, search_done, object_position"
-				# print object_found, search_done, object_position, i
-				# i+=1
+			# object_found, search_done, object_position = run_command(command_name)
+			# print "object_found, search_done, object_position"
+			# print object_found, search_done, object_position, i
+			# i+=1
 
-				# agent.DestroyWME(pID)
-				# pID = agent.CreateIdWME(pInputLink, object_position)
-				# time.sleep(3)
-				c = raw_input('continue: ')
-				i += 1
-		else:
-			print("Error. No comamands received.")
+			# agent.DestroyWME(pID)
+			# pID = agent.CreateIdWME(pInputLink, object_position)
+			# time.sleep(3)
 			c = raw_input('continue: ')
-	if(object_found):
+		else:
+			print("Error. No commands received.")
+			c = raw_input('continue: ')
+	if not object_exists:
+		print("Object not exist")
+	elif object_found:
 		print "Object Found"
 	else:
 		print "Not Found"
