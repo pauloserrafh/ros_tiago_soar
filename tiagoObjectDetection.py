@@ -21,7 +21,6 @@ from find_object_2d.msg import ObjectsStamped
 # Instantiate CvBridge
 bridge = CvBridge()
 
-
 def wait_for_valid_time(timeout):
 	"""Wait for a valid time (non-zero), this is important
 	when using a simulated clock"""
@@ -46,7 +45,7 @@ def get_status_string(status_code):
 	return GoalStatus.to_string(status_code)
 
 class TiagoObjectDetection:
-	def __init__(self):
+	def __init__(self, objectsFolder ='~/objects/'):
 		rospy.init_node('run_motion_python')
 		rospy.loginfo("Starting run_motion_python application...")
 		wait_for_valid_time(10.0)
@@ -55,63 +54,37 @@ class TiagoObjectDetection:
 		rospy.loginfo("Waiting for Action Server...")
 		self.client.wait_for_server()
 		self.image = None
-		#rospy.init_node('listener', anonymous=True)
+		self.fullPath = objectsFolder
+		self.objectPath = None # Initially we dont have an object
+		self.objectFound = False
 
-		# images = message_filters.Subscriber('/xtion/rgb/image_raw', Image)
-		# object_detect = message_filters.Subscriber('/objectsStamped', ObjectsStamped)
-		# ts = message_filters.ApproximateTimeSynchronizer([images,object_detect],10,0.1)
-		# ts.registerCallback(callback)
-
-
-	def act(self, action = "detectObject", params = None):
+	def act(self, action = "detectObject", objectPath = ""):
 		print(action)
 		goal = PlayMotionGoal()
 		goal.motion_name = action
 		goal.skip_planning = False
 		goal.priority = 0  # Optional
+		self.objectPath = objectPath
 
 		if (action == 'detectObject'):
 
-			#cli_args = ['/opt/ros/indigo/share/find_object_2d/launch/teste.launch' , 'gui:=true']
-			#roslaunch_args = cli_args[1:] 
-			#roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(cli_args)[0], roslaunch_args)]
-			                
+			self.writeXML()
 			
-			#uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)
-			#roslaunch.configure_logging(uuid)
-			#launch = roslaunch.parent.ROSLaunchParent(uuid, roslaunch_file)#
-
-			#launch.start()
-
-
-			import roslaunch
-
-			cli_args = ['/opt/ros/indigo/share/find_object_2d/launch/teste.launch']
-			#roslaunch_args = cli_args[0:] 
-			#print(roslaunch_args)
+			cli_args = ['objectDetectRoslaunch.launch']			
 			roslaunch_file = [(roslaunch.rlutil.resolve_launch_arguments(cli_args)[0])]
 			print(roslaunch_file)
 			uuid = roslaunch.rlutil.get_or_generate_uuid(None, False)    
 			roslaunch.configure_logging(uuid)
-			launch = roslaunch.parent.ROSLaunchParent(uuid,  roslaunch_file)#'/opt/ros/indigo/share/find_object_2d/launch/teste.launch')
+			launch = roslaunch.parent.ROSLaunchParent(uuid,  roslaunch_file)
 
 			launch.start()
-
-
-
-
-			#roslaunch_file1 = roslaunch.rlutil.resolve_launch_arguments(cli_args1)
-			#roslaunch_args1 = cli_args1[2:]
-			#
-			#launch_files = [(roslaunch_file1, roslaunch_args1), (roslaunch_file2, roslaunch_args2), roslaunch_file3]
-
 
 			image = rospy.wait_for_message("/xtion/rgb/image_raw", Image, 30.0)
 			object_detect = rospy.wait_for_message('/objectsStamped', ObjectsStamped, 30.0)
 			self.doObjectDetect(image,object_detect)		
 
-			#self.exitRoslaunch()
-
+			self.exitRoslaunch()
+			launch.shutdown()
 		elif (action == 'preSearchObject'):
 			print("preSearchObject")
 		elif (action == 'wave'):
@@ -124,21 +97,19 @@ class TiagoObjectDetection:
 
 			state = self.client.get_state()
 
-		#if action_ok:
-		#	rospy.loginfo("Action finished succesfully with state: " + str(get_status_string(state)))
-		#else:
-		#	rospy.logwarn("Action failed with state: " + str(get_status_string(state)))
-
 	def reset(self):
 		pass
 
 	def exitRoslaunch(self):
 		print("Good bye")
+ 
+	# Ros indigo - roslaunch doesnt support xml parameter, so it is a way to do it.
+	def writeXML(self):
+		with open("objectDetectRoslaunch.launch", "w") as f:
+			string="<launch><!-- Nodes --><node name=\"find_object_2d\" pkg=\"find_object_2d\" type=\"find_object_2d\" output=\"screen\"><remap from=\"image\" to=\"/xtion/rgb/image_raw\"/><param name=\"gui\" value=\"false\" type=\"bool\"/><param name=\"objects_path\" value=\""+ str(self.fullPath + self.objectPath) + "\" type=\"str\"/><param name=\"settings_path\" value=\"~/.ros/find_object_2d.ini\" type=\"str\"/></node></launch>"
+			f.write(string)
 
 	def doObjectDetect(self,image,object_detect):
-		print(image.header.stamp)
-		print(object_detect.header.stamp)
-		#assert image.header.stamp == data.header.stamp
 		try:
 			# Convert your ROS Image message to OpenCV2
 			cv2_img = bridge.imgmsg_to_cv2(image, "bgr8")
@@ -177,18 +148,42 @@ class TiagoObjectDetection:
 				#cv2.imshow("Teste", cv2_img)
 				#cv2.waitKey(30)
 				j+=12
+				self.objectFound = True
 		else:
+			self.objectFound = False
 			print("No objects detected.\n")
+
+
 		self.image = cv2_img
 
 
 	def getImage(self):
 		return self.image
 
+	def getObjectFoundFlag(self):
+		return self.objectFound
+
 if __name__ == '__main__':
 
-	robot = TiagoObjectDetection()
-	robot.act(action = "detectObject")
-	robot.reset()
-	cv2.imshow("Teste", robot.getImage())
-	cv2.waitKey(0)
+	while(True):
+		robot = TiagoObjectDetection()
+		#robot.act(action = "detectObject", objectPath='ball')
+		objectName = raw_input("Write the name of the object to find: ")
+		robot.act(action = "detectObject", objectPath=objectName)
+		robot.reset()
+		cv2.imshow("Teste", robot.getImage())
+		cv2.waitKey(30)
+
+		# if object was found you can check it
+		# print (robot.getObjectFoundFlag())
+
+		# if(robot.getObjectFoundFlag())
+			#cv2.imshow("Teste", robot.getImage())
+			#cv2.waitKey(30)
+			# SET OUTPUT LINK WITH OBJECT FOUND IN IMAGE
+		# else
+			# SET OUT PUT LINK WITH OBJECT NOT FOUND IN IMAGE
+
+
+
+
