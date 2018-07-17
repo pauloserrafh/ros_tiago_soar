@@ -28,7 +28,7 @@ sp {groceries*propose*search
 }
 
 sp {groceries*propose*presearch
-    (state <s> ^cmd <c>
+    (state <s> ^cmd.name search
                 -^known
                 -^newobj)
 -->
@@ -37,9 +37,8 @@ sp {groceries*propose*presearch
 }
 
 sp {groceries*propose*searchresult
-    (state <s> ^cmd <c>
+    (state <s> ^cmd.name search
                 ^io.input-link <io>)
-    (<c> ^name search)
     (<io> ^status <status>)
 -->
     (<s> ^operator <o>
@@ -48,9 +47,8 @@ sp {groceries*propose*searchresult
 }
 
 sp {groceries*propose*presearchresult
-    (state <s> ^cmd <c>
+    (state <s> ^cmd.name search
                 ^io.input-link <io>)
-    (<c> ^name search)
     (<io> ^new <new>)
 -->
     (<s> ^operator <o>
@@ -66,10 +64,7 @@ sp {groceries*apply*init
 -->
     (<s> ^upload_done 1
             ^obj <obj>)
-    (<obj> ^name ball
-           ^left Null
-           ^right Null
-           ^pos Null)
+    (<obj> ^name ball)
     (<out> ^action <a>)
     (<a> ^name init)
 }
@@ -90,9 +85,11 @@ sp {groceries*apply*search
                 ^io.output-link <out>)
     (<o> ^name search
         ^obj <obj>)
+    (<obj> ^name <n>)
 -->
     (<out> ^action <a>)
-    (<a> ^name search)
+    (<a> ^name search
+         ^obj_name <n>)
 }
 
 sp {groceries*apply*presearch
@@ -106,7 +103,7 @@ sp {groceries*apply*presearch
 sp {groceries*apply*searchresult*found
     (state <s> ^operator.name searchresult
                 ^searchstatus 1
-                ^cmd_name <c>)
+                ^cmd <c>
                 ^io.output-link <out>)
 -->
     (<s> ^known 1 -)
@@ -119,7 +116,7 @@ sp {groceries*apply*searchresult*found
 sp {groceries*apply*searchresult*notfound
     (state <s> ^operator.name searchresult
                 ^searchstatus 0
-                ^cmd_name <c>)
+                ^cmd <c>
                 ^io.output-link <out>)
 -->
     (<s> ^known 1 -)
@@ -137,7 +134,7 @@ sp {groceries*apply*presearchresult*found
     (<io> ^obj <obj>)
 -->
     (<s> ^newobj 1 -
-        ^obj <obj>)
+         ^obj <obj>)
     (<out> ^action <a>)
     (<a> ^name presearchresultfound)
 }
@@ -162,49 +159,4 @@ sp {groceries*elaborate*isknown
     (<obj> ^name <oname>)
 -->
     (<s> ^known 1)
-    (write |Elaborate|)
-}
-
-sp {groceries*elaborate*isLeft*name
-    (state <s> ^obj <obj1>
-               ^obj {<> <obj1> <obj2>})
-    (<obj1> ^name <o1name>
-            ^left <o1left>)
-    (<obj2> ^name <o1left>)
--->
-    (<obj2> ^right <o1name>)
-    (write |Name from left|)
-}
-
-sp {groceries*elaborate*isRight*name
-    (state <s> ^obj <obj1>
-               ^obj {<> <obj1> <obj2>})
-    (<obj1> ^name <o1name>
-            ^right <o1right>)
-    (<obj2> ^name <o1right>)
--->
-    (<obj2> ^left <o1name>)
-    (write |Name from right|)
-}
-
-sp {groceries*elaborate*isLeft*pos
-    (state <s> ^obj <obj1>
-               ^obj {<> <obj1> <obj2>})
-    (<obj1> ^left <o1left>
-            ^pos {<> Null <pos1>})
-    (<obj2> ^name <o1left>)
--->
-    (<obj2> ^pos (- <pos1> 1))
-    (write |Pos from left|)
-}
-
-sp {groceries*elaborate*isRight*pos
-    (state <s> ^obj <obj1>
-               ^obj {<> <obj1> <obj2>})
-    (<obj1> ^right <o1right>
-            ^pos {<> Null <pos1>})
-    (<obj2> ^name <o1right>)
--->
-    (<obj2> ^pos (+ <pos1> 1))
-    (write |Pos from right|)
 }

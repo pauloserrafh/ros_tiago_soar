@@ -73,7 +73,7 @@ def define_prohibitions(): #TODISCOVER WTF IS THIS
 	pass
 
 def create_kernel():
-	kernel = sml.Kernel.CreateKernelInCurrentThread()
+	kernel = sml.Kernel.CreateKernelInNewThread()
 	if not kernel or kernel.HadError():
 		print kernel.GetLastErrorDescription()
 		exit(1)
@@ -185,6 +185,7 @@ if __name__ == '__main__':
 	agent = create_agent(kernel, "agent")
 	agent_load_productions(agent,SOAR_GP_PATH)
 	agent.SpawnDebugger()
+	done = 'n'
 
 	kernel.CheckForIncomingCommands()
 
@@ -198,79 +199,99 @@ if __name__ == '__main__':
 	# Precisa fazer um run antes de iniciar.
 	agent.RunSelf(1)
 	agent.Commands()
-	while not search_done:
-		# agent.RunSelfTilOutput()
-		agent.RunSelf(1)
-		agent.Commands()
-		numberCommands = agent.GetNumberCommands()
-		print "Number of commands received by the agent: %s" % (numberCommands)
-		if (numberCommands):
-			command = agent.GetCommand(0)
-			command_name = command.GetCommandName()
-			command_attr = command.FindByAttribute('name',0)
+	while not done == 'y':
+		while not search_done:
+			# agent.RunSelfTilOutput()
+			agent.RunSelf(1)
+			agent.Commands()
+			numberCommands = agent.GetNumberCommands()
+			print "Number of commands received by the agent: %s" % (numberCommands)
+			if (numberCommands):
+				command = agent.GetCommand(0)
+				command_name = command.GetCommandName()
+				command_attr = command.FindByAttribute('name',0)
 
-			print("command: ")
-			print(command)
-			print("command_name: ")
-			print(command_name)
+				# print("command: ")
+				# print(command)
+				# print("command_name: ")
+				# print(command_name)
 
-			print("command_attr: ")
-			print(command_attr.GetAttribute())
-			print("command_attr_str: ")
-			print(command_attr.GetValueAsString())
+				# print("command_attr: ")
+				# print(command_attr.GetAttribute())
+				print("command_attr_str: %s" %(command_attr.GetValueAsString()))
 
-			command_name = command_attr.GetValueAsString()
+				command_name = command_attr.GetValueAsString()
 
-			if command_name  == 'init':
-				wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
-				wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
-				wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", "bottle")
-				agent.Commit()
-				# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
-				agent.RunSelf(1)
-			elif command_name  == 'search':
-				print("Buscando objeto")
-				wme_status = agent.CreateIntWME(pInputLink, "status", 1)
-				agent.Commit()
-				# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
-				agent.RunSelf(1)
-			elif command_name  == 'presearch':
-				print("Verificando...")
-				wme_new = agent.CreateIntWME(pInputLink, "new", 1)
-				wme_obj = agent.CreateIdWME(pInputLink, "obj")
-				wme_obj_name = agent.CreateStringWME(wme_obj, "name", "bottle")
-				agent.Commit()
-				# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
-				agent.RunSelf(1)
-			elif command_name  == 'searchresultfound':
-				search_done = True
-				object_found = True
-			elif command_name  == 'searchresultnotfound':
-				search_done = True
-				object_found = False
-			elif command_name  == 'presearchresultnotfound':
-				search_done = True
-				object_exists = False
-			# wme1 = agent.CreateIntWME(pID, "cmd_name", search)
+				if command_name  == 'init':
+					wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
+					wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
+					wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", "bottle")
+					agent.Commit()
+					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
+					# agent.RunSelf(1)
+				elif command_name  == 'search':
+					# TODO
+					# Adicionar a funcao de busca de objeto e passar o valor de status baseado nessa funcao.
+					print("Buscando objeto")
+					o_name = command.FindByAttribute('obj_name',0).GetValueAsString()
+					print(o_name)
 
-			# object_found, search_done, object_position = run_command(command_name)
-			# print "object_found, search_done, object_position"
-			# print object_found, search_done, object_position, i
-			# i+=1
+					wme_status = agent.CreateIntWME(pInputLink, "status", 1)
+					agent.Commit()
+					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
+					agent.RunSelf(1)
+				elif command_name  == 'presearch':
+					# TODO
+					# Adicionar a funcao de buscar os descritores na pasta e retornar new baseado nessa funcao
+					print("Verificando...")
+					wme_new = agent.CreateIntWME(pInputLink, "new", 1)
+					wme_obj = agent.CreateIdWME(pInputLink, "obj")
+					wme_obj_name = agent.CreateStringWME(wme_obj, "name", "bottle")
 
-			# agent.DestroyWME(pID)
-			# pID = agent.CreateIdWME(pInputLink, object_position)
-			# time.sleep(3)
-			c = raw_input('continue: ')
+					# wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
+					# wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
+					# wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", "bottle")
+
+					agent.Commit()
+					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
+					# agent.RunSelf(1)
+				elif command_name  == 'presearchresultfound':
+					agent.DestroyWME(wme_new)
+					agent.Commit()
+				elif command_name  == 'searchresultfound':
+					search_done = True
+					object_found = True
+				elif command_name  == 'searchresultnotfound':
+					search_done = True
+					object_found = False
+				elif command_name  == 'presearchresultnotfound':
+					search_done = True
+					object_exists = False
+				# wme1 = agent.CreateIntWME(pID, "cmd_name", search)
+
+				# object_found, search_done, object_position = run_command(command_name)
+				# print "object_found, search_done, object_position"
+				# print object_found, search_done, object_position, i
+				# i+=1
+
+				# agent.DestroyWME(pID)
+				# pID = agent.CreateIdWME(pInputLink, object_position)
+				# time.sleep(3)
+				c = raw_input('continue: ')
+			else:
+				print("Error. No commands received.")
+				c = raw_input('continue: ')
+		if not object_exists:
+			print("Object not exist")
+		elif object_found:
+			print "Object Found"
 		else:
-			print("Error. No commands received.")
-			c = raw_input('continue: ')
-	if not object_exists:
-		print("Object not exist")
-	elif object_found:
-		print "Object Found"
-	else:
-		print "Not Found"
+			print "Not Found"
+		done = raw_input("END? (y/n): ")
+		if not done == '':
+			object_found = False
+			search_done = False
+			object_exists = True
 
 
 	kernel.DestroyAgent(agent)
