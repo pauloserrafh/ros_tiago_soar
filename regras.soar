@@ -100,24 +100,24 @@ sp {groceries*apply*presearch
 
 sp {groceries*apply*searchresult*found
     (state <s> ^operator.name searchresult
-                ^searchstatus 1)
+                ^searchstatus 1
+                ^cmd_name <c>)
 -->
     (write |Found|)
     (<s> ^known 1 -)
     (<s> ^cmd_name <c> -)
     (<s> ^searchstatus 1 -)
-    (halt)
 }
 
 sp {groceries*apply*searchresult*notfound
     (state <s> ^operator.name searchresult
-                ^searchstatus 0)
+                ^searchstatus 0
+                ^cmd_name <c>)
 -->
     (write |Not Found|)
     (<s> ^known 1 -)
     (<s> ^cmd_name <c> -)
     (<s> ^searchstatus 0 -)
-    (halt)
 }
 
 sp {groceries*apply*presearchresult*found
@@ -138,7 +138,6 @@ sp {groceries*apply*presearchresult*notfound
     (write |NoNewObj|)
     (<s> ^cmd_name <c> -)
     (<s> ^newobj 0 -)
-    (halt)
 }
 
 ############################   ELABORATES #########################
