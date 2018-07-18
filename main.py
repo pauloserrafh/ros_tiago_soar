@@ -95,40 +95,6 @@ def agent_load_productions(agent, path):
 		print agent.GetLastErrorDescription()
 		exit(1)
 
-def object_to_find_file():
-	f = open('search.txt', 'r')
-	to_find = f.readline()
-	f.close()
-	return to_find
-
-def object_position_file():
-	f = open('found.txt', 'r')
-	to_find = f.readline()
-	f.close()
-	return to_find
-
-def run_command(command_name):
-	if command_name  == 'helloworld':
-		robot = Tiago()
-		robot.act(action = "wave")
-		robot.reset()
-		return (False, False, '')
-	elif command_name  == 'searchball':
-		robot = Tiago()
-		robot.act(action = "wave")
-		robot.reset()
-		return (False, False, object_position_file())
-	elif command_name  == 'found':
-		robot = Tiago()
-		robot.act(action = "wave")
-		robot.reset()
-		return (True, True, '')
-	elif command_name  == 'notfound':
-		robot = Tiago()
-		robot.act(action = "wave")
-		robot.reset()
-		return (False, True, '')
-
 def object_load(object_name, pathFolder="./objects"):
 	list_names = os.listdir(pathFolder)
 
@@ -140,7 +106,6 @@ def object_load(object_name, pathFolder="./objects"):
 if __name__ == '__main__':
 	soar_interface = SOARInterface()
 	tiago = Tiago.TiagoObjectDetection()
-	to_find = object_to_find_file() # The object to be found
 
 	print "******************************\n******************************\nNew goal\n******************************\n******************************\n"
 	kernel = create_kernel()
@@ -169,25 +134,13 @@ if __name__ == '__main__':
 			agent.RunSelf(1)
 			agent.Commands()
 			numberCommands = agent.GetNumberCommands()
-			print "Number of commands received by the agent: %s" % (numberCommands)
 			if (numberCommands):
 				command = agent.GetCommand(0)
 				command_name = command.GetCommandName()
 				command_attr = command.FindByAttribute('name',0)
-
-				# print("command: ")
-				# print(command)
-				# print("command_name: ")
-				# print(command_name)
-
-				# print("command_attr: ")
-				# print(command_attr.GetAttribute())
-				print("command_attr_str: %s" %(command_attr.GetValueAsString()))
-
 				command_name = command_attr.GetValueAsString()
 
 				if command_name  == 'init':
-					print("OBJECTNAME is: ", objectName)
 					wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
 					wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
 					wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", objectName)
@@ -195,11 +148,7 @@ if __name__ == '__main__':
 					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
 					agent.RunSelf(1)
 				elif command_name  == 'search':
-					# TODO
-					# Adicionar a funcao de busca de objeto e passar o valor de status baseado nessa funcao.
-					print("Buscando objeto")
 					o_name = command.FindByAttribute('obj_name',0).GetValueAsString()
-					print(o_name)
 					tiago.act(action = "detectObject", objectPath=o_name)
 
 					wme_status = agent.CreateIntWME(pInputLink, "status", tiago.getObjectFoundFlag())
@@ -207,55 +156,34 @@ if __name__ == '__main__':
 					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
 					agent.RunSelf(1)
 				elif command_name  == 'presearch':
-					# TODO
-					# Adicionar a funcao de buscar os descritores na pasta e retornar new baseado nessa funcao
-					print("Verificando...")
 					object_load_state = object_load(objectName)
 					wme_new = agent.CreateIntWME(pInputLink, "new", object_load_state)
 					if(object_load_state):
 						wme_obj = agent.CreateIdWME(pInputLink, "obj")
 						wme_obj_name = agent.CreateStringWME(wme_obj, "name", objectName)
-
-					# wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
-					# wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
-					# wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", "bottle")
-
 					agent.Commit()
 					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
-					# agent.RunSelf(1)
+					agent.RunSelf(1)
 				elif command_name  == 'presearchresultfound':
-					print("presearchresultfound")
 					agent.DestroyWME(wme_new)
 					agent.Commit()
+					agent.RunSelf(1)
 				elif command_name  == 'searchresultfound':
-					print("searchresultfound")
 					agent.DestroyWME(wme_status)
 					agent.Commit()
 					search_done = True
 					object_found = True
 				elif command_name  == 'searchresultnotfound':
-					print("searchresultnotfound")
 					agent.DestroyWME(wme_status)
 					agent.Commit()
 					search_done = True
 					object_found = False
 				elif command_name  == 'presearchresultnotfound':
-					print("presearchresultnotfound")
 					agent.DestroyWME(wme_new)
 					agent.Commit()
 					search_done = True
 					object_exists = False
-				# wme1 = agent.CreateIntWME(pID, "cmd_name", search)
-
-				# object_found, search_done, object_position = run_command(command_name)
-				# print "object_found, search_done, object_position"
-				# print object_found, search_done, object_position, i
-				# i+=1
-
-				# agent.DestroyWME(pID)
-				# pID = agent.CreateIdWME(pInputLink, object_position)
-				# time.sleep(3)
-				c = raw_input('continue: ')
+				# c = raw_input('continue: ')
 			else:
 				print("Error. No commands received.")
 				c = raw_input('continue: ')
@@ -282,5 +210,3 @@ if __name__ == '__main__':
 
 	kernel.DestroyAgent(agent)
 	kernel.Shutdown()
-	#del kernelCommit
-
