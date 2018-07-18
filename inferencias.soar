@@ -1,0 +1,94 @@
+sp {groceries*propose*init
+    (state <s> ^type state
+                -^upload_done)
+-->
+    (<s> ^operator <o>)
+    (<o> ^name upload)
+}
+
+#########################################   APPLY   ############################
+
+sp {groceries*apply*init
+    (state <s> ^operator.name upload
+                ^io.output-link <out>)
+-->
+    (<s> ^upload_done 1
+            ^obj <obj1>
+            ^obj <obj2>
+            ^obj <obj3>
+            ^obj <obj4>)
+    (<obj1> ^name quadrado
+           ^left None
+           ^right Null
+           ^pos 0)
+    (<obj2> ^name triangulo
+           ^left quadrado
+           ^right bola
+           ^pos Null)
+    (<obj3> ^name bola
+           ^left Null
+           ^right Null
+           ^pos Null)
+    (<obj4> ^name pente
+           ^left bola
+           ^right Null
+           ^pos Null)
+    (<out> ^action <a>)
+    (<a> ^name init)
+}
+
+############################   ELABORATES #########################
+
+sp {groceries*elaborate*isLeft*name
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^name <o1name>
+            ^left <o1left>)
+    (<obj2> ^name <o1left>)
+-->
+    (<obj2> ^right <o1name>)
+    (write (crlf) |Left name|)
+}
+
+sp {groceries*elaborate*isRight*name
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^name <o1name>
+            ^right <o1right>)
+    (<obj2> ^name <o1right>)
+-->
+    (<obj2> ^left <o1name>)
+    (write (crlf) |Right name|)
+}
+
+sp {groceries*elaborate*isLeft*pos
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^left <o1left>
+            ^pos {<> Null <pos1>})
+    (<obj2> ^name <o1left>)
+-->
+    (<obj2> ^pos (- <pos1> 1))
+    (write (crlf) |Left pos|)
+}
+
+sp {groceries*elaborate*isRight*pos
+    (state <s> ^obj <obj1>
+               ^obj {<> <obj1> <obj2>})
+    (<obj1> ^right <o1right>
+            ^pos {<> Null <pos1>})
+    (<obj2> ^name <o1right>)
+-->
+    (<obj2> ^pos (+ <pos1> 1))
+    (write (crlf) |Right pos|)
+} 
+
+sp {groceries*elaborate*print
+    (state <s> ^obj <obj>)
+    (<obj> ^name <oname>
+           ^pos <opos>
+           ^left <oleft>
+           ^right <oright>) 
+-->
+    (write (crlf) <oname> |++| <opos> |++| <oleft> |++| <oright>)
+}
