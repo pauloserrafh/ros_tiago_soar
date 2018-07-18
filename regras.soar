@@ -62,9 +62,7 @@ sp {groceries*apply*init
     (state <s> ^operator.name upload
                 ^io.output-link <out>)
 -->
-    (<s> ^upload_done 1
-            ^obj <obj>)
-    (<obj> ^name ball)
+    (<s> ^upload_done 1)
     (<out> ^action <a>)
     (<a> ^name init)
 }
@@ -108,6 +106,7 @@ sp {groceries*apply*searchresult*found
 -->
     (<s> ^known 1 -)
     (<s> ^cmd <c> -)
+    (<s> ^upload_done 1 -)
     (<s> ^searchstatus 1 -)
     (<out> ^action <a>)
     (<a> ^name searchresultfound)
@@ -121,6 +120,7 @@ sp {groceries*apply*searchresult*notfound
 -->
     (<s> ^known 1 -)
     (<s> ^cmd <c> -)
+    (<s> ^upload_done 1 -)
     (<s> ^searchstatus 0 -)
     (<out> ^action <a>)
     (<a> ^name searchresultnotfound)
@@ -146,6 +146,7 @@ sp {groceries*apply*presearchresult*notfound
                 ^io.output-link <out>)
 -->
     (<s> ^cmd <c> -)
+    (<s> ^upload_done 1 -)
     (<s> ^newobj 0 -)
     (<out> ^action <a>)
     (<a> ^name presearchresultnotfound)

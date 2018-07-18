@@ -19,14 +19,17 @@
 # System imports
 import sys
 import time
+import os
 # ROS imports
 import rospy
 from actionlib import SimpleActionClient, GoalStatus
 from play_motion_msgs.msg import PlayMotionAction, PlayMotionGoal
 # Soar imports
-PATH_TO_SOAR = "/home/user/SOAR/Soar/out"
+PATH_TO_SOAR = "/home/tiago/rapela/Soar/out"
 sys.path.append(PATH_TO_SOAR)
 import Python_sml_ClientInterface as sml
+import cv2
+import tiagoObjectDetection as Tiago
 
 SOAR_GP_PATH = "./regras.soar"
 object_found = False
@@ -92,56 +95,6 @@ def agent_load_productions(agent, path):
 		print agent.GetLastErrorDescription()
 		exit(1)
 
-class Tiago:
-	def __init__(self):
-		rospy.init_node('run_motion_python')
-
-		rospy.loginfo("Starting run_motion_python application...")
-		wait_for_valid_time(10.0)
-
-		self.client = SimpleActionClient('/play_motion', PlayMotionAction)
-
-		rospy.loginfo("Waiting for Action Server...")
-		self.client.wait_for_server()
-
-	def act(self, action):
-		goal = PlayMotionGoal()
-		goal.motion_name = action
-		goal.skip_planning = False
-		goal.priority = 0  # Optional
-
-		rospy.loginfo("Sending goal with motion: " + goal.motion_name)
-		self.client.send_goal(goal)
-
-		rospy.loginfo("Waiting for result...")
-		action_ok = self.client.wait_for_result(rospy.Duration(30.0))
-
-		state = self.client.get_state()
-
-		if action_ok:
-			rospy.loginfo("Action finished succesfully with state: " + str(get_status_string(state)))
-		else:
-			rospy.logwarn("Action failed with state: " + str(get_status_string(state)))
-
-	def reset(self):
-		goal = PlayMotionGoal()
-		goal.motion_name = 'home'
-		goal.skip_planning = False
-		goal.priority = 0  # Optional
-
-		rospy.loginfo("Sending goal with motion: " + goal.motion_name)
-		self.client.send_goal(goal)
-
-		rospy.loginfo("Waiting for result...")
-		action_ok = self.client.wait_for_result(rospy.Duration(30.0))
-
-		state = self.client.get_state()
-
-		if action_ok:
-			rospy.loginfo("Action finished succesfully with state: " + str(get_status_string(state)))
-		else:
-			rospy.logwarn("Action failed with state: " + str(get_status_string(state)))
-
 def object_to_find_file():
 	f = open('search.txt', 'r')
 	to_find = f.readline()
@@ -176,8 +129,17 @@ def run_command(command_name):
 		robot.reset()
 		return (False, True, '')
 
+def object_load(object_name, pathFolder="./objects"):
+	list_names = os.listdir(pathFolder)
+
+	if object_name in list_names:
+		return 1
+	else:
+		return 0
+
 if __name__ == '__main__':
 	soar_interface = SOARInterface()
+	tiago = Tiago.TiagoObjectDetection()
 	to_find = object_to_find_file() # The object to be found
 
 	print "******************************\n******************************\nNew goal\n******************************\n******************************\n"
@@ -200,6 +162,8 @@ if __name__ == '__main__':
 	agent.RunSelf(1)
 	agent.Commands()
 	while not done == 'y':
+		objectName = None
+		objectName = raw_input("Write the name of the object to find: ")
 		while not search_done:
 			# agent.RunSelfTilOutput()
 			agent.RunSelf(1)
@@ -223,20 +187,22 @@ if __name__ == '__main__':
 				command_name = command_attr.GetValueAsString()
 
 				if command_name  == 'init':
+					print("OBJECTNAME is: ", objectName)
 					wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
 					wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
-					wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", "bottle")
+					wme_cmd_obj_name = agent.CreateStringWME(wme_cmd, "obj_name", objectName)
 					agent.Commit()
 					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
-					# agent.RunSelf(1)
+					agent.RunSelf(1)
 				elif command_name  == 'search':
 					# TODO
 					# Adicionar a funcao de busca de objeto e passar o valor de status baseado nessa funcao.
 					print("Buscando objeto")
 					o_name = command.FindByAttribute('obj_name',0).GetValueAsString()
 					print(o_name)
+					tiago.act(action = "detectObject", objectPath=o_name)
 
-					wme_status = agent.CreateIntWME(pInputLink, "status", 1)
+					wme_status = agent.CreateIntWME(pInputLink, "status", tiago.getObjectFoundFlag())
 					agent.Commit()
 					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
 					agent.RunSelf(1)
@@ -244,9 +210,11 @@ if __name__ == '__main__':
 					# TODO
 					# Adicionar a funcao de buscar os descritores na pasta e retornar new baseado nessa funcao
 					print("Verificando...")
-					wme_new = agent.CreateIntWME(pInputLink, "new", 1)
-					wme_obj = agent.CreateIdWME(pInputLink, "obj")
-					wme_obj_name = agent.CreateStringWME(wme_obj, "name", "bottle")
+					object_load_state = object_load(objectName)
+					wme_new = agent.CreateIntWME(pInputLink, "new", object_load_state)
+					if(object_load_state):
+						wme_obj = agent.CreateIdWME(pInputLink, "obj")
+						wme_obj_name = agent.CreateStringWME(wme_obj, "name", objectName)
 
 					# wme_cmd = agent.CreateIdWME(pInputLink, "cmd")
 					# wme_cmd_name = agent.CreateStringWME(wme_cmd, "name", "search")
@@ -256,15 +224,25 @@ if __name__ == '__main__':
 					# Precisa dar dois RunSelf. Fazendo um agora e o outro na iteracao normal
 					# agent.RunSelf(1)
 				elif command_name  == 'presearchresultfound':
+					print("presearchresultfound")
 					agent.DestroyWME(wme_new)
 					agent.Commit()
 				elif command_name  == 'searchresultfound':
+					print("searchresultfound")
+					agent.DestroyWME(wme_status)
+					agent.Commit()
 					search_done = True
 					object_found = True
 				elif command_name  == 'searchresultnotfound':
+					print("searchresultnotfound")
+					agent.DestroyWME(wme_status)
+					agent.Commit()
 					search_done = True
 					object_found = False
 				elif command_name  == 'presearchresultnotfound':
+					print("presearchresultnotfound")
+					agent.DestroyWME(wme_new)
+					agent.Commit()
 					search_done = True
 					object_exists = False
 				# wme1 = agent.CreateIntWME(pID, "cmd_name", search)
@@ -281,10 +259,18 @@ if __name__ == '__main__':
 			else:
 				print("Error. No commands received.")
 				c = raw_input('continue: ')
+		else:
+			agent.DestroyWME(wme_cmd_obj_name)
+			agent.DestroyWME(wme_cmd_name)
+			agent.DestroyWME(wme_cmd)
+			agent.Commit()
 		if not object_exists:
 			print("Object not exist")
 		elif object_found:
-			print "Object Found"
+			cv2.imshow("Objects to Detect", tiago.getImage())
+			cv2.waitKey(30)
+			cv2.destroyAllWindows()
+			print("FOUND OBJECT")
 		else:
 			print "Not Found"
 		done = raw_input("END? (y/n): ")
@@ -292,7 +278,7 @@ if __name__ == '__main__':
 			object_found = False
 			search_done = False
 			object_exists = True
-
+		cv2.destroyAllWindows()
 
 	kernel.DestroyAgent(agent)
 	kernel.Shutdown()

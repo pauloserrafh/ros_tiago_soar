@@ -56,7 +56,7 @@ class TiagoObjectDetection:
 		self.image = None
 		self.fullPath = objectsFolder
 		self.objectPath = None # Initially we dont have an object
-		self.objectFound = False
+		self.objectFound = 0
 
 	def act(self, action = "detectObject", objectPath = ""):
 		print(action)
@@ -148,9 +148,9 @@ class TiagoObjectDetection:
 				#cv2.imshow("Teste", cv2_img)
 				#cv2.waitKey(30)
 				j+=12
-				self.objectFound = True
+				self.objectFound = 1
 		else:
-			self.objectFound = False
+			self.objectFound = 0
 			print("No objects detected.\n")
 
 
